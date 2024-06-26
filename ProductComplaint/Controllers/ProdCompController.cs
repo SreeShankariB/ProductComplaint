@@ -17,7 +17,7 @@ namespace ProductComplaint.Controllers
             this.dbContext = dbContext;
         }
 
-
+        //To get all complaints
         [HttpGet]
         public IActionResult GetAllComplaints()
         {
@@ -26,6 +26,7 @@ namespace ProductComplaint.Controllers
             return Ok(allComplaints);
         }
 
+        //To get complaint by id
         [HttpGet]
         [Route("{id:guid}")]
         public IActionResult GetComplaintById(Guid id)
@@ -40,9 +41,36 @@ namespace ProductComplaint.Controllers
 
         }
 
+        //To add a complaint
         [HttpPost]
         public IActionResult AddComplaints(AddComplaintDto addComplaintDto)
         {
+
+        //To check if all the values entered are not null and valid
+            if (string.IsNullOrWhiteSpace(addComplaintDto.ProductID) || addComplaintDto.ProductID.Equals("string", StringComparison.OrdinalIgnoreCase) ||
+                string.IsNullOrWhiteSpace(addComplaintDto.CustName) || addComplaintDto.CustName.Equals("string", StringComparison.OrdinalIgnoreCase) ||
+                string.IsNullOrWhiteSpace(addComplaintDto.Email) || addComplaintDto.Email.Equals("string", StringComparison.OrdinalIgnoreCase) ||
+                string.IsNullOrWhiteSpace(addComplaintDto.ProblemDescription) || addComplaintDto.ProblemDescription.Equals("string", StringComparison.OrdinalIgnoreCase) ||
+                string.IsNullOrWhiteSpace(addComplaintDto.Status) || addComplaintDto.Status.Equals("string", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest("All fields must be filled with valid values.");
+            }
+
+            //To check if the entered Status is valid
+            var validStatuses = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                 "Open",
+                 "InProgress",
+                 "Rejected",
+                 "Accepted",
+                 "Canceled"
+            };
+
+            if (!validStatuses.Contains(addComplaintDto.Status))
+            {
+                return BadRequest("Status must be one of the following: Open, InProgress, Rejected, Accepted, Canceled.");
+            }
+
             var productcompEntity = new ProductComp()
             {
                 ProductID = addComplaintDto.ProductID,
@@ -61,6 +89,7 @@ namespace ProductComplaint.Controllers
 
         }
 
+        //To update a complaint
         [HttpPut]
         [Route("{id:guid}")]
         public IActionResult UpdateComplaints(Guid id, UpdateComplaintDto updateComplaintDto)
@@ -106,6 +135,7 @@ namespace ProductComplaint.Controllers
 
         }
 
+        //To delete a complaint
         [HttpDelete]
         [Route("{id:guid}")]
         public IActionResult DeleteComplaint(Guid id)
@@ -115,6 +145,11 @@ namespace ProductComplaint.Controllers
             if (prodcomp == null)
             { 
                 return NotFound();
+            }
+
+            if (prodcomp.Status.Equals("Canceled", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest("The complaint is already deleted or does not exist.");
             }
 
             //dbContext.Products.Remove(prodcomp);
